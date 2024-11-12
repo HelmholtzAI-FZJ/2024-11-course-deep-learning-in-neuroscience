@@ -8,7 +8,7 @@ from resnet50 import resnet50Model
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Resize((256, 256))
+    transforms.Resize((256, 256), antialias=True)
 ])
 
 # The number of nodes
