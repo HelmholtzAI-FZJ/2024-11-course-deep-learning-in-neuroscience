@@ -3,10 +3,49 @@ author: Alexandre Strube // Sabrina Benassou // Javad Kasravi
 title: Bringing Deep Learning Workloads to JSC supercomputers
 subtitle: Parallelize Training
 date: November 19, 2024
+
+---
+
+## Good practice
+
+- Always store your code in the project folder. In our case 
+- ```bash
+/p/project/training2441/$USER
+```
+
+- Store data in the scratch directory for faster I/O access. Files in scratch are deleted after 90 days of inactivity.
+- ```bash
+/p/scratch/training2441/$USER
+```
+
+- Store the data in `$DATA_dataset` for a more permanent location.This location is not accessible by compute nodes.
+You have to Join the [project](https://judoor.fz-juelich.de/projects/datasets/) in order to store and access data 
+
+
+---
+
+## We need to download some code
+
+```bash
+cd $HOME/course
+git clone https://github.com/HelmholtzAI-FZJ/2024-11-course-deep-learning-in-neuroscience
+```
+
 ---
 
 ## The ResNet50 Model
 ![](images/resnet.png)
+
+---
+
+
+## The ImageNet dataset
+#### Large Scale Visual Recognition Challenge (ILSVRC)
+- An image dataset organized according to the [WordNet hierarchy](https://wordnet.princeton.edu). 
+- Extensively used in algorithms for object detection and image classification at large scale. 
+- It has 1000 classes, that comprises 1.2 million images for training, and 50,000 images for the validation set.
+
+![](images/imagenet_banner.jpeg)
 
 ---
 
@@ -153,9 +192,68 @@ real	342m11.864s
 
 ## But what about many GPUs?
 
+::: {.container}
+:::: {.col}
+
+
+
+
+
+- We make use of the GPU of our supercomputer and distribute our training to make training faster.
 - It's when things get interesting
+::::
+:::: {.col}
+![](images/GPUs.svg)
+::::
+:::
 
 ---
+
+## Distributed Training
+
+
+- Parallelize the training across multiple nodes, 
+- Significantly enhancing training speed and model accuracy.
+- It is particularly beneficial for large models and computationally intensive tasks, such as deep learning.[[1]](https://pytorch.org/tutorials/distributed/home.html)
+
+
+---
+
+<!-- ## Terminologies
+
+- WORLD_SIZE: number of processes participating in the job.
+- RANK: the rank of the process in the network.
+- LOCAL_RANK: the rank of the process on the local machine.
+- MASTER_PORT: free port on machine with rank 0.
+<!-- - MASTER_ADDR: address of rank 0 node. -->
+
+<!-- ---  -->
+
+
+
+--- 
+
+<!-- ![](images/ranks.svg)
+
+---
+
+![](images/local_ranks.svg)
+
+
+--- -->
+
+
+## Parallel Training with PyTorch DDP
+
+- [PyTorch's DDP (Distributed Data Parallel)](https://lightning.ai/docs/pytorch/stable/accelerators/gpu_intermediate.html) works as follows:
+    - Each GPU across each node gets its own process.
+    - Each GPU gets visibility into a subset of the overall dataset. It will only ever see that subset.
+    - Each process inits the model.
+    - Each process performs a full forward and backward pass in parallel.
+    - The gradients are synced and averaged across all processes.
+    - Each process updates its optimizer.
+
+--- 
 
 ## Data Parallel
 
@@ -236,6 +334,163 @@ real	89m15.923s
 ![](images/data-parallel-multi-node-averaging.svg)
 
 ---
+
+## DDP steps
+
+1. Set up the environement variables for the distributed mode (WORLD_SIZE, RANK, LOCAL_RANK ...)
+
+- ```python
+# The number of total processes started by Slurm.
+ntasks = os.getenv('SLURM_NTASKS')
+# Index of the current process.
+rank = os.getenv('SLURM_PROCID')
+# Index of the current process on this node only.
+local_rank = os.getenv('SLURM_LOCALID')
+# The number of nodes
+nnodes = os.getenv("SLURM_NNODES")
+```
+
+---
+
+## DDP steps
+
+2. Initialize a sampler to specify the sequence of indices/keys used in data loading.
+3. Implements data parallelism of the model. 
+4. Allow only one process to save checkpoints.
+
+- ```python
+datamodule = ImageNetDataModule("/p/scratch/training2441/", 256, \
+    int(os.getenv('SLURM_CPUS_PER_TASK')), transform)
+trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
+trainer.fit(model, datamodule=datamodule)
+trainer.save_checkpoint("image_classification_model.pt")
+```
+
+---
+
+## Multi-Node training
+
+```python
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Resize((256, 256))
+])
+
+# 1. The number of nodes
+nnodes = os.getenv("SLURM_NNODES")
+# 2. Organize the data
+datamodule = ImageNetDataModule("/p/scratch/training2441/", 128, \
+    int(os.getenv('SLURM_CPUS_PER_TASK')), transform)
+# 3. Build the model using desired Task
+model = resnet50Model()
+# 4. Create the trainer
+trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
+# 5. Train the model
+trainer.fit(model, datamodule=datamodule)
+# 6. Save the model!
+trainer.save_checkpoint("image_classification_model.pt")
+```
+
+---
+
+## Multi-Node training
+
+16 nodes and 4 GPU each 
+
+```bash
+#!/bin/bash -x
+#SBATCH --nodes=16                     # This needs to match Trainer(num_nodes=...)
+#SBATCH --gres=gpu:4                   # Use the 4 GPUs available
+#SBATCH --ntasks-per-node=4            # When using pl it should always be set to 4
+#SBATCH --cpus-per-task=32             # Divide the number of cpus (128) by the number of GPUs (4)
+#SBATCH --time=00:15:00
+#SBATCH --partition=dc-gpu
+#SBATCH --account=training2441
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --reservation=training2441
+
+export CUDA_VISIBLE_DEVICES=0,1,2,3    # Very important to make the GPUs visible
+export SRUN_CPUS_PER_TASK="$SLURM_CPUS_PER_TASK"
+
+source $HOME/course/$USER/sc_venv_template/activate.sh
+time srun python3 ddp_training.py
+```
+
+```bash
+real	6m56.457s
+```
+
+---
+
+## Multi-Node training
+
+With 4 nodes: 
+
+```bash
+real	24m48.169s
+```
+
+With 8 nodes: 
+
+```bash
+real	13m10.722s
+```
+
+With 16 nodes: 
+
+```bash
+real	6m56.457s
+```
+
+With 32 nodes: 
+
+```bash
+real	4m48.313s
+```
+---
+
+## Data Parallel
+
+<!-- What changed? -->
+
+- It was 
+- ```python
+trainer = pl.Trainer(max_epochs=10,  accelerator="gpu")
+``` 
+- Became 
+- ```python
+nnodes = os.getenv("SLURM_NNODES")
+trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
+```
+
+---
+
+## Data Parallel
+
+<!-- What changed? -->
+
+- It was
+- ```bash
+#SBATCH --nodes=1                
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=128
+```
+- Became
+- ```bash
+#SBATCH --nodes=16                   # This needs to match Trainer(num_nodes=...)
+#SBATCH --gres=gpu:4                 # Use the 4 GPUs available
+#SBATCH --ntasks-per-node=4          # When using pl it should always be set to 4
+#SBATCH --cpus-per-task=32           # Divide the number of cpus (128) by the number of GPUs (4)
+export CUDA_VISIBLE_DEVICES=0,1,2,3  # Very important to make the GPUs visible
+```
+
+---
+
+## DEMO
+
+--- 
 
 ## Before we go further...
 
@@ -432,187 +687,6 @@ real	89m15.923s
 
 ---
 
-
-## Parallel Training with PyTorch DDP
-
-- [PyTorch's DDP (Distributed Data Parallel)](https://lightning.ai/docs/pytorch/stable/accelerators/gpu_intermediate.html) works as follows:
-    - Each GPU across each node gets its own process.
-    - Each GPU gets visibility into a subset of the overall dataset. It will only ever see that subset.
-    - Each process inits the model.
-    - Each process performs a full forward and backward pass in parallel.
-    - The gradients are synced and averaged across all processes.
-    - Each process updates its optimizer.
-
---- 
-
-
-## Terminologies
-
-- WORLD_SIZE: number of processes participating in the job.
-- RANK: the rank of the process in the network.
-- LOCAL_RANK: the rank of the process on the local machine.
-- MASTER_PORT: free port on machine with rank 0.
-<!-- - MASTER_ADDR: address of rank 0 node. -->
-
----
-
-## DDP steps
-
-1. Set up the environement variables for the distributed mode (WORLD_SIZE, RANK, LOCAL_RANK ...)
-
-- ```python
-# The number of total processes started by Slurm.
-ntasks = os.getenv('SLURM_NTASKS')
-# Index of the current process.
-rank = os.getenv('SLURM_PROCID')
-# Index of the current process on this node only.
-local_rank = os.getenv('SLURM_LOCALID')
-# The number of nodes
-nnodes = os.getenv("SLURM_NNODES")
-```
-
----
-
-## DDP steps
-
-2. Initialize a sampler to specify the sequence of indices/keys used in data loading.
-3. Implements data parallelism of the model. 
-4. Allow only one process to save checkpoints.
-
-- ```python
-datamodule = ImageNetDataModule("/p/scratch/training2441/", 256, \
-    int(os.getenv('SLURM_CPUS_PER_TASK')), transform)
-trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
-trainer.fit(model, datamodule=datamodule)
-trainer.save_checkpoint("image_classification_model.pt")
-```
-
----
-
-## DDP steps
-
-```python
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Resize((256, 256))
-])
-
-# 1. The number of nodes
-nnodes = os.getenv("SLURM_NNODES")
-# 2. Organize the data
-datamodule = ImageNetDataModule("/p/scratch/training2441/", 128, \
-    int(os.getenv('SLURM_CPUS_PER_TASK')), transform)
-# 3. Build the model using desired Task
-model = resnet50Model()
-# 4. Create the trainer
-trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
-# 5. Train the model
-trainer.fit(model, datamodule=datamodule)
-# 6. Save the model!
-trainer.save_checkpoint("image_classification_model.pt")
-```
-
----
-
-## DDP training
-
-16 nodes and 4 GPU each 
-
-```bash
-#!/bin/bash -x
-#SBATCH --nodes=16                     # This needs to match Trainer(num_nodes=...)
-#SBATCH --gres=gpu:4                   # Use the 4 GPUs available
-#SBATCH --ntasks-per-node=4            # When using pl it should always be set to 4
-#SBATCH --cpus-per-task=32             # Divide the number of cpus (128) by the number of GPUs (4)
-#SBATCH --time=00:15:00
-#SBATCH --partition=dc-gpu
-#SBATCH --account=training2441
-#SBATCH --output=%j.out
-#SBATCH --error=%j.err
-#SBATCH --reservation=training2441
-
-export CUDA_VISIBLE_DEVICES=0,1,2,3    # Very important to make the GPUs visible
-export SRUN_CPUS_PER_TASK="$SLURM_CPUS_PER_TASK"
-
-source $HOME/course/$USER/sc_venv_template/activate.sh
-time srun python3 ddp_training.py
-```
-
-```bash
-real	6m56.457s
-```
-
----
-
-## DDP training
-
-With 4 nodes: 
-
-```bash
-real	24m48.169s
-```
-
-With 8 nodes: 
-
-```bash
-real	13m10.722s
-```
-
-With 16 nodes: 
-
-```bash
-real	6m56.457s
-```
-
-With 32 nodes: 
-
-```bash
-real	4m48.313s
-```
----
-
-## Data Parallel
-
-<!-- What changed? -->
-
-- It was 
-- ```python
-trainer = pl.Trainer(max_epochs=10,  accelerator="gpu")
-``` 
-- Became 
-- ```python
-nnodes = os.getenv("SLURM_NNODES")
-trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
-```
-
----
-
-## Data Parallel
-
-<!-- What changed? -->
-
-- It was
-- ```bash
-#SBATCH --nodes=1                
-#SBATCH --gres=gpu:1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=128
-```
-- Became
-- ```bash
-#SBATCH --nodes=16                   # This needs to match Trainer(num_nodes=...)
-#SBATCH --gres=gpu:4                 # Use the 4 GPUs available
-#SBATCH --ntasks-per-node=4          # When using pl it should always be set to 4
-#SBATCH --cpus-per-task=32           # Divide the number of cpus (128) by the number of GPUs (4)
-export CUDA_VISIBLE_DEVICES=0,1,2,3  # Very important to make the GPUs visible
-```
-
----
-
-## DEMO
-
---- 
-
 ## TensorBoard
 
 - In resnet50.py
@@ -646,7 +720,6 @@ tensorboard --logdir=[PATH_TO_TENSOR_BOARD]
 
 ## DAY 2 RECAP 
 
-- Access using FS, Arrow, and H5 files
 - Ran parallel code.
 - Can submit single node, multi-gpu and multi-node training.
 - Use TensorBoard on the supercomputer.

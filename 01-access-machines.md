@@ -1,6 +1,6 @@
 ---
 author: Alexandre Strube // Sabrina Benassou // Javad Kasravi
-title: Accessing the machines, intro
+title: Bringing Deep Learning Workloads to JSC supercomputers course
 # subtitle: A primer in supercomputers`
 date: November 19, 2024
 ---
@@ -52,7 +52,7 @@ Links for the complimentary parts of this course:
 
 ---
 
-### Schedule for day 1
+### Schedule
 
 | Time          | Title        |
 | ------------- | -----------  |
@@ -60,7 +60,7 @@ Links for the complimentary parts of this course:
 | 09:15 - 10:00 | Introduction |
 | 11:00 - 10:15 | Coffee break |
 | 10:16 - 10:30 | Judoor, Keys |
-| 10:30 - 11:00 | SSH, Jupyter, VS Code |
+| 10:30 - 11:00 | Jupyter-JSC |
 | 11:00 - 11:15 | Coffee Break |
 | 11:15 - 12:00 | Running services on the login and compute nodes | 
 | 12:00 - 12:15 | Coffee Break |
@@ -252,263 +252,8 @@ Please open this document on your own browser! We will need it for the exercises
 
 ## Jupyter
 
-#### Pay attention to the partition - DON'T RUN IT ON THE LOGIN NODE!!!
 
 ![](images/jupyter-partition.png)
-
----
-
-## Connecting to Jureca DC
-
----
-
-## VSCode
-
-- [Download VScode: code.visualstudio.com](https://code.visualstudio.com/download)
-- Install and run it
-  - On the local terminal, type `code`
-- Install [Remote Development Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
-- Install [Remote: SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh)
-- If you have Windows, you need WSL as explained on the email.
-
----
-
-## VSCode
-
-### Now with the remote explorer tab
-![](images/vscode-welcome.png)
-
-
----
-
-#### SSH
-- SSH is a secure shell (terminal) connection to another computer
-- You connect from your computer to the LOGIN NODE
-- Security is given by public/private keys
-- A connection to the supercomputer needs a 
-    1. Key,
-    2. Configuration
-    3. Key/IP address known to the supercomputer
-
----
-
-### SSH
-
-#### Create key in VSCode's Terminal (menu View->Terminal)
-
-```bash
-mkdir ~/.ssh/
-ssh-keygen -a 100 -t ed25519 -f ~/.ssh/id_ed25519-JSC
-```
-
-```bash
-$ ssh-keygen -a 100 -t ed25519 -f ~/.ssh/id_ed25519-JSC
-Generating public/private ed25519 key pair.
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
-Your identification has been saved in /Users/strube1/.ssh/id_ed25519-JSC
-Your public key has been saved in /Users/strube1/.ssh/id_ed25519-JSC.pub
-The key fingerprint is:
-SHA256:EGNNC1NTaN8fHwpfuZRPa50qXHmGcQjxp0JuU0ZA86U strube1@Strube-16
-The keys randomart image is:
-+--[ED25519 256]--+
-|      *++oo=o. . |
-|     . =+o .= o  |
-|      .... o.E..o|
-|       .  +.+o+B.|
-|        S  =o.o+B|
-|          . o*.B+|
-|          . . =  |
-|           o .   |
-|            .    |
-+----[SHA256]-----+
-```
-
----
-
-### SSH
-
-#### Configure SSH session
-
-```bash
-code $HOME/.ssh/config
-```
-
-Windows users, from Ubuntu WSL
-(Change username for your user on windows)
-
-```bash
-ls -la /mnt/c/Users/
-mkdir /mnt/c/Users/USERNAME/.ssh/
-cp $HOME/.ssh/* /mnt/c/Users/USERNAME/.ssh/
-```
-
-
----
-
-### SSH
-
-#### Configure SSH session
-
-```bash
-Host jureca
-        HostName jureca.fz-juelich.de
-        User [MY_USERNAME]   # Here goes your username, not the word MY_USERNAME.
-        AddressFamily inet
-        IdentityFile ~/.ssh/id_ed25519-JSC
-        MACs hmac-sha2-512-etm@openssh.com
-```
-
-Copy contents to the config file and save it 
-
-**REPLACE [MY_USERNAME] WITH YOUR USERNAME!!! 🤦‍♂️**
-
----
-
-### SSH
-
-####  JSC restricts from where you can login
-#### So we need to:
-1. Find our ip range
-2. Add the range and key to [Judoor](https://judoor.fz-juelich.de)
-
----
-
-### SSH
-
-#### Find your ip/name range
-
-Open **[https://www.whatismyip.com](https://www.whatismyip.com)**
-
----
-
-### SSH
-
-#### Find your ip/name range
-
-![](images/whatismyip.png)
-
-- Let's keep this inside vscode: `code key.txt` and paste the number you got
-
----
-
-### SSH
-
-Did everyone get their **own** ip address?
-
----
-
-### SSH - EXAMPLE
-
-- I will use the number `93.199.55.163`
-- **YOUR NUMBER IS DIFFERENT**
-- Seriously
-
----
-
-### SSH - Example: `93.199.55.163`
-
-- Go to VSCode and make it simpler, replace the 2nd half with `"0.0/16"`:
-  - It was `93.199.55.163`
-  - Becomes `93.199.0.0/16` (with YOUR number, not with the example)
-- Add a `from=""` around it
-- So, it looks like this, now: `from="93.199.0.0/16"`
-- Add a second magic number, with a comma: `,10.0.0.0/8` 🧙‍♀️
-- I promise, the magic is worth it 🧝‍♂️ (If time allows)
-- In the end it looks like this: `from="93.199.0.0/16,10.0.0.0/8"` 🎬
-- Keep it open, we will use it later
-- If you are from FZJ, also add "134.94.0.0/16" with a comma
-
----
-
-### SSH - Example: `93.199.0.0/16`
-
-#### Copy your ssh key
-- Terminal: `code ~/.ssh/id_ed25519-JSC.pub`
-- Something like this will open:
-
-- ```bash
-ssh-ed25519 AAAAC3NzaC1lZDE1NTA4AAAAIHaoOJF3gqXd7CV6wncoob0DL2OJNfvjgnHLKEniHV6F strube@demonstration.fz-juelich.de
-```
-
-- Paste this line at the same `key.txt` which you just opened
-
----
-
-### SSH
-
-#### Example: `93.199.0.0/16`
-
-- Put them together and copy again:
-- ```bash
-from="93.199.0.0/16,10.0.0.0/8" ssh-ed25519 AAAAC3NzaC1lZDE1NTA4AAAAIHaoOJF3gqXd7CV6wncoob0DL2OJNfvjgnHLKEniHV6F strube@demonstration.fz-juelich.de
-```
-
----
-
-### SSH
-
-- Let's add it on [Judoor](https://judoor.fz-juelich.de)
-- ![](images/manage-ssh-keys.png)
-- Do it for JURECA and JUDAC with the same key
-
----
-
-### SSH
-
-#### Add new key to [Judoor](https://judoor.fz-juelich.de)
-
-![](images/manage-ssh-keys-from-and-key.png){ width=850px }
-
-This might take some minutes
-
----
-
-### SSH: Exercise
-
-That's it! Give it a try (and answer yes)
-
-```bash
-$ ssh jureca
-The authenticity of host 'jrlogin03.fz-juelich.de (134.94.0.185)' cannot be established.
-ED25519 key fingerprint is SHA256:ASeu9MJbkFx3kL1FWrysz6+paaznGenChgEkUW8nRQU.
-This key is not known by any other names
-Are you sure you want to continue connecting (yes/no/[fingerprint])? Yes
-**************************************************************************
-*                            Welcome to Jureca DC                   *
-**************************************************************************
-...
-...
-strube1@jrlogin03~ $ 
-```
-
----
-
-### SSH: Exercise 
-#### Make sure you are connected to the supercomputer
-
-```bash
-# Create a folder for myself
-mkdir $PROJECT_training2441/$USER
-
-# Create a shortcut for the project on the home folder
-rm -rf ~/course ; ln -s $PROJECT_training2441/$USER ~/course
-
-# Enter course folder and
-cd ~/course
-
-# Where am I?
-pwd
-
-# We well need those later
-mkdir ~/course/.cache
-mkdir ~/course/.config
-mkdir ~/course/.fastai
-
-rm -rf $HOME/.cache ; ln -s ~/course/.cache $HOME/
-rm -rf $HOME/.config ; ln -s ~/course/.config $HOME/
-rm -rf $HOME/.fastai ; ln -s ~/course/.fastai $HOME/
-```
 
 ---
 
@@ -520,9 +265,19 @@ rm -rf $HOME/.fastai ; ln -s ~/course/.fastai $HOME/
 
 ---
 
+## Luncher in Jupyter-JSC
+![](images/launcher-jupyter-jsc.png)
+
+
 ## Software
 
-#### Tool for finding software: `module spider`
+### Connect to terminal
+
+![](images/jupyter-terminal.png)
+
+---
+
+### Tool for finding software: `module spider`
 
 ```bash
 strube1$ module spider PyTorch
@@ -646,49 +401,25 @@ The following modules match your search criteria: "toml"
 ```
 ---
 
-## VSCode
-#### Editing files on the supercomputers
+### How to run it on the login node
 
-![](images/vscode-remotes.png)
-
----
-
-## VSCode
-
-![](images/vscode-jusuf.png)
+#### create a python file
+![](images/open-new-file-jp.png)
 
 ---
 
-## VSCode
-
-- You can have a terminal inside VSCode: 
-  - Go to the menu View->Terminal
-
---- 
-
-## VSCode
-
-- From the VSCode's terminal, navigate to your "course" folder and to the name you created earlier.
-
-- ```bash
-cd $HOME/course/
-pwd
-```
-
-- This is out working directory. We do everything here.
+#### create a python file
+![](images/rename-matrix-python-file.png)
 
 ---
 
-### Demo code
-#### Create a new file "`matrix.py`" on VSCode on Jureca DC
+#### create an python file
+![](images/open-editor-matrix-python.png)
 
-```bash
-code matrix.py
-```
+---
 
-Paste this into the file:
-
-``` {.python .number-lines}
+#### create a python file
+``` {.bash .number-lines}
 import torch
 
 matrix1 = torch.randn(3,3)
@@ -703,8 +434,12 @@ print("The result is:\n", result)
 
 ---
 
-### How to run it on the login node
+#### create a python file
+![](images/create-python-file.png)
 
+---
+
+#### Run code in login node
 ```
 module load Stages/2023
 module load GCC OpenMPI PyTorch
@@ -740,7 +475,7 @@ Simple Linux Utility for Resource Management
 
 ### Slurm submission file example
 
-`code jureca-matrix.sbatch`
+Create a file named `jureca-matrix.sbatch` as described in the previous section, and copy all the content from the following into this file.
 
 ``` {.bash .number-lines}
 #!/bin/bash
@@ -802,7 +537,7 @@ squeue --me
 ### Reservations
 
 - Some partitions have reservations, which means that only certain users can use them at certain times.
-- For this course, it's called `training2441_day1`
+- For this course, it's called `training2441`
 
 --- 
 
@@ -818,13 +553,7 @@ scancel <JOBID>
 
 #### By now you should have output and error log files on your directory. Check them!
 
-```bash
-# Notice that this number is the job id. It's different for every job
-cat output.412169 
-cat error.412169 
-```
-
-Or simply open it on VSCode!
+simply open `output.412169` and `error.412169` using Editor!!
 
 ---
 
@@ -1161,7 +890,7 @@ A tunnel which exposes the supercomputer's port 3000 as port 1234 locally](image
 
 ---
 
-## Port forwarding demo:
+<!-- ## Port forwarding demo:
 
 - On VSCode's terminal:
 - ```bash
@@ -1172,7 +901,7 @@ tensorboard --logdir=runs  --port=12345 serve
 - Note the tab `PORTS` next to the terminal 
 - On the browser: [http://localhost:12345](http://localhost:12345)
 
----
+--- -->
 
 ### Tensorboard on Jureca DC
 
@@ -1198,164 +927,3 @@ As of now, I expect you managed to:
 ## ANY QUESTIONS??
 
 #### Feedback is more than welcome!
-
----
-
-### Helmholtz Blablador
-
-![](images/blablador.png)
-
----
-
-### Blablador
-
-- Blablador is our Large Language Model inference server (eg. ChatGPT)
-- It's a service for the Helmholtz Association.
-  - It's fast, free and PRIVATE - I don't record your conversations!
-- Anyone here can use it
-
----
-
-### Blablador 
-
-![https://helmholtz-blablador.fz-juelich.de](images/blablador-qrcode.png){width=500px}
-
----
-
-## VScode + Continue.dev
-
-![](images/continue-ask-code.png)
-
----
-
-### Obtaining a token
-
-- Go to helmholtz codebase at [http://codebase.helmholtz.cloud](http://codebase.helmholtz.cloud)
-- Log in with your email
-- On the left side, click on your profile, and then on "Preferences"
-- On "Access tokens", click "Add new token",
-  - give it a name, 
-  - put an expiration date (max 1 year)
-  - and choose "api" in the "scopes" section
-- Click "Create Personal Access Token"
-  - You will see a "............................." - copy this and save somewhere.
-
----
-
-### Blablador
-
-![](images/blablador-api-scope.png){width=800px}
-
----
-
-### Blablador on VSCode!
-
-- Add [continue.dev](https://marketplace.visualstudio.com/items?itemName=Continue.continue) extension to VSCode
-- On Continue, choose to add model, choose Other OpenAI-compatible API
-- Click in Open Config.json at the end
-
----
-
-## Blablador: VScode + Continue.dev
-
-- Inside config.json, add at the `"models"` section:
-
-- ```json
-    {
-      "title": "Mistral helmholtz",
-      "provider": "openai",
-      "contextLength": 16384,
-      "model": "alias-code",
-      "apiKey": "ADD-YOUR-TOKEN-HERE",
-      "apiBase": "https://helmholtz-blablador.fz-juelich.de:8000"
-    },
-```
-
-- REPLACE THE APIKEY WITH YOUR OWN TOKEN!!!!
-
----
-
-### Blablador on VSCode
-
-- Click on the "Continue.dev extension on the left side of VSCode.
-- Select some code from our exercises, select it and send it to continue with cmd-shift-L (or ctrl-shift-L)
-- Ask it to add unit tests, for example.
-
----
-
-## Backup slides
-
----
-
-## There's more!
-
-- Remember the magic? 🧙‍♂️
-- Let's use it now to access the compute nodes directly!
-
----
-
-## Proxy Jump
-
-#### Accessing compute nodes directly
-
-- If we need to access some ports on the compute nodes
-- ![](images/proxyjump-magic.svg)
-
----
-
-## Proxy Jump - SSH Configuration
-
-Type on your machine "`code $HOME/.ssh/config`" and paste this at the end:
-
-```ssh
-
-# -- Compute Nodes --
-Host *.jureca
-        User [ADD YOUR USERNAME HERE]
-        StrictHostKeyChecking no
-        IdentityFile ~/.ssh/id_ed25519-JSC
-        ProxyJump jureca
-```        
-
----
-
-## Proxy Jump: Connecting to a node
-
-Example: A service provides web interface on port 9999
-
-On the supercomputer:
-
-```bash
-srun --time=00:05:00 \
-     --nodes=1 --ntasks=1 \
-     --partition=dc-gpu \
-     --account training2441 \
-     --cpu_bind=none \
-     --pty /bin/bash -i
-
-bash-4.4$ hostname # This is running on a compute node of the supercomputer
-jwb0002
-
-bash-4.4$ cd $HOME/course/
-bash-4.4$ source sc_venv_template/activate.sh
-bash-4.4$ tensorboard --logdir=runs  --port=9999 serve
-```
-
----
-
-## Proxy Jump 
-
-On your machine:
-
-- ```bash
-ssh -L :3334:localhost:9999 jrc002i.jureca
-```
-
-- Mind the `i` letter I added at the end of the hostname
-
-- Now you can access the service on your local browser at [http://localhost:3334](http://localhost:3334)
-
----
-
-### Now that's really the end! 😓
-
