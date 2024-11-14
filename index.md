@@ -7,6 +7,5 @@ date: November 19, 2024
 
 # Topics (as links)
 
-- [Day 1: Access machines, slurm, etc](01-access-machines.html)
-- [Day 2: Speedup Data Loading](02-speedup-data-loading.html)
-- [Day 2: Parallelize training](03-parallelize-training.html)
+- [Part 1: Access machines, slurm, etc](01-access-machines.html)
+- [Part 2: Parallelize training](02-parallelize-training.html)
