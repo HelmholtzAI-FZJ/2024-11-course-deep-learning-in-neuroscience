@@ -766,7 +766,7 @@ self.log("training_loss", train_loss)
 
 ---
 
-## DAY 2 RECAP 
+## Part 2 RECAP 
 
 - Ran parallel code.
 - Can submit single node, multi-gpu and multi-node training.

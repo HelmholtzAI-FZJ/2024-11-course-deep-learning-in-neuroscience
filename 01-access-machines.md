@@ -918,7 +918,7 @@ tensorboard --logdir=runs  --port=12345 serve
 
 ---
 
-## Day 1 recap
+## Part 1 recap
 
 As of now, I expect you managed to: 
 
