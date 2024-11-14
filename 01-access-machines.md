@@ -10,7 +10,7 @@ Links for the complimentary parts of this course:
 
 - [Event page](https://go.fzj.de/dl-in-neuroscience-course)
 - [Judoor project page invite](https://go.fzj.de/dl-in-neuroscience-project-join)
-- [This document: https://go.fzj.de/dl-in-neuroscience](https://go.fzj.de/dl-in-neuroscience)
+- [This document: https://go.fzj.de/dl-in-neuroscience](https://helmholtzai-fzj.github.io/2024-11-course-deep-learning-in-neuroscience/#/title-slide)
 - Our mailing list for [AI news](https://lists.fz-juelich.de/mailman/listinfo/ml)
 - [Survey at the end of the course](https://go.fzj.de/dl-in-neuroscience-survey)
 - [Virtual Environment template](https://gitlab.jsc.fz-juelich.de/kesselheim1/sc_venv_template)
@@ -57,14 +57,15 @@ Links for the complimentary parts of this course:
 | Time          | Title        |
 | ------------- | -----------  |
 | 09:00 - 09:15 | Welcome      |
-| 09:15 - 10:00 | Introduction |
-| 11:00 - 10:15 | Coffee break |
-| 10:16 - 10:30 | Judoor, Keys |
-| 10:30 - 11:00 | Jupyter-JSC |
+| 09:15 - 09:30 | Judoor registration |
+| 09:30 - 10:00 | Introduction |
+| 10:00 - 10:15 | Coffee break |
+| 10:15 - 10:30 | Jupyter-JSC & SLURM |
+| 10:30 - 11:00 | ... |
 | 11:00 - 11:15 | Coffee Break |
-| 11:15 - 12:00 | Running services on the login and compute nodes | 
+| 11:15 - 12:00 | ... | 
 | 12:00 - 12:15 | Coffee Break |
-| 12:30 - 13:00 | Sync (everyone should be at the same point) |
+| 12:30 - 13:00 | ... |
 
 ---
 
@@ -239,7 +240,7 @@ Please open this document on your own browser! We will need it for the exercises
 
 ---
 
-## Jupyter
+## Jupyter-jsc
 
 [jupyter-jsc.fz-juelich.de](https://jupyter-jsc.fz-juelich.de)
 
@@ -250,8 +251,9 @@ Please open this document on your own browser! We will need it for the exercises
 
 ---
 
-## Jupyter
+## Jupyter-jsc
 
+[jupyter-jsc.fz-juelich.de](https://jupyter-jsc.fz-juelich.de)
 
 ![](images/jupyter-partition.png)
 
@@ -341,26 +343,8 @@ Search with the version - it will suggest the hierarchy
 
 ## Example: PyTorch
 
-(make sure you are still connected to Jureca DC)
-
-```bash
-$ python
--bash: python: command not found
-```
-
-Oh noes! 🙈
-
-Let's bring Python together with PyTorch!
-
----
-
-## Example: PyTorch
-
 Copy and paste these lines
 ```bash
-# This command fails, as we have no proper python
-python 
-# So, we load the correct modules...
 module load Stages/2024
 module load GCC OpenMPI Python PyTorch
 # And we run a small test: import pytorch and ask its version
@@ -369,8 +353,6 @@ python -c "import torch ; print(torch.__version__)"
 
 Should look like this:
 ```bash
-$ python
--bash: python: command not found
 $ module load Stages/2024
 $ module load GCC OpenMPI Python PyTorch
 $ python -c "import torch ; print(torch.__version__)" 
@@ -553,8 +535,33 @@ scancel <JOBID>
 
 #### By now you should have output and error log files on your directory. Check them!
 
-simply open `output.412169` and `error.412169` using Editor!!
+simply open `output.412169` and `error.412169` using Editor !!
 
+---
+
+### Setup project path
+
+```bash
+mkdir $PROJECT_training2441/$USER
+
+Create a shortcut for the project on the home folder
+rm -rf ~/course ; ln -s $PROJECT_training2441/$USER ~/course
+
+# Enter course folder and
+cd ~/course
+
+# Where am I?
+pwd
+
+# We well need those later
+mkdir ~/course/.cache
+mkdir ~/course/.config
+mkdir ~/course/.fastai
+
+rm -rf $HOME/.cache ; ln -s ~/course/.cache $HOME/
+rm -rf $HOME/.config ; ln -s ~/course/.config $HOME/
+rm -rf $HOME/.fastai ; ln -s ~/course/.fastai $HOME/
+```
 ---
 
 ## Extra software, modules and kernels
