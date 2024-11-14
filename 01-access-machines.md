@@ -535,7 +535,7 @@ scancel <JOBID>
 
 #### By now you should have output and error log files on your directory. Check them!
 
-simply open `output.412169` and `error.412169` using Editor!!
+simply open `output.412169` and `error.412169` using Editor !!
 
 ---
 
