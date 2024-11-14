@@ -59,13 +59,13 @@ Links for the complimentary parts of this course:
 | 09:00 - 09:15 | Welcome      |
 | 09:15 - 09:30 | Judoor registration |
 | 09:30 - 10:00 | Introduction |
-| 10:00 - 10:15 | Coffee break |
-| 10:15 - 10:30 | Jupyter-JSC & SLURM |
-| 10:30 - 11:00 | ... |
+| 10:00 - 10:05 | Coffee break |
+| 10:05 - 10:20 | Jupyter-JSC & SLURM |
+| 10:20 - 11:00 | Launch First Job |
 | 11:00 - 11:15 | Coffee Break |
-| 11:15 - 12:00 | ... | 
+| 11:15 - 12:00 | Distributed Data Parallel | 
 | 12:00 - 12:15 | Coffee Break |
-| 12:30 - 13:00 | ... |
+| 12:30 - 13:00 | Model Parallelism and Analysis |
 
 ---
 
