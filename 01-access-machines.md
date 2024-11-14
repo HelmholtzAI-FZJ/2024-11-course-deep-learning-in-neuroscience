@@ -685,7 +685,6 @@ create file  fastai.sbatch
 #SBATCH --partition=dc-gpu
 #SBATCH --reservation=training2441 # For today only
 
-cd $HOME/course/
 source sc_venv_template/activate.sh # Now we finally use the fastai module
 
 srun python cats.py
