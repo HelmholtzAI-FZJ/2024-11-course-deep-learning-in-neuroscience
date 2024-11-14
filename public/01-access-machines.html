@@ -20,11 +20,8 @@
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-    /* The extra [class] is a hack that increases specificity enough to
-       override a similar rule in reveal.js */
-    ul.task-list[class]{list-style: none;}
+    ul.task-list{list-style: none;}
     ul.task-list li input[type="checkbox"] {
-      font-size: inherit;
       width: 0.8em;
       margin: 0 0.8em 0.2em -1.6em;
       vertical-align: middle;
@@ -32,7 +29,7 @@
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -886,10 +883,13 @@ some software!</h3>
 sc_venv_template/requirements.txt</p></li>
 <li class="fragment"><p>Add these lines at the end:</p></li>
 <li class="fragment"><div class="sourceCode" id="cb13"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">fastai</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">wandb</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="ex">accelerate</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="ex">deepspeed</span></span></code></pre></div></li>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="va">fastai</span><span class="op">=</span>=2.7.15</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="va">scipy</span><span class="op">=</span>=1.11.1</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="va">matplotlib</span><span class="op">=</span>=3.7.2</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="ex">scikit-learn==1.3.1</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="va">pandas</span><span class="op">=</span>=2.0.3</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="va">torch</span><span class="op">=</span>=2.1.2</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="ex">accelerate</span></span></code></pre></div></li>
 <li class="fragment"><p>Run on the terminal:
 <code>sc_venv_template/setup.sh</code></p></li>
 </ul>
@@ -925,62 +925,60 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href=
 
 <h3 id="lets-train-a-classifier">Let’s train a 🐈 classifier!</h3>
 <ul>
-<li class="fragment">This is a minimal demo, to show some quirks of the
-supercomputer</li>
+<li class="fragment"><p>This is a minimal demo, to show some quirks of
+the supercomputer</p></li>
+<li class="fragment"><p>Create a file names “cats.py”</p></li>
 <li class="fragment"><div class="sourceCode" id="cb17"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> cats.py</span></code></pre></div></li>
-<li class="fragment"><div class="sourceCode" id="cb18"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.vision.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.callback.tensorboard <span class="im">import</span> <span class="op">*</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Downloading dataset...&quot;</span>)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> untar_data(URLs.PETS)<span class="op">/</span><span class="st">&#39;images&#39;</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Finished downloading dataset&quot;</span>)</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_cat(x): <span class="cf">return</span> x[<span class="dv">0</span>].isupper()</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataloaders and resize the images</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>dls <span class="op">=</span> ImageDataLoaders.from_name_func(</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    path, get_image_files(path), valid_pct<span class="op">=</span><span class="fl">0.2</span>, seed<span class="op">=</span><span class="dv">42</span>,</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    label_func<span class="op">=</span>is_cat, item_tfms<span class="op">=</span>Resize(<span class="dv">224</span>))</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;On the login node, this will download resnet34&quot;</span>)</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> vision_learner(dls, resnet34, metrics<span class="op">=</span>accuracy)</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>cbs<span class="op">=</span>[SaveModelCallback(), TensorBoardCallback(<span class="st">&#39;runs&#39;</span>, trace_model<span class="op">=</span><span class="va">True</span>)]</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Trains the model for 6 epochs with this dataset</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>learn.unfreeze()</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">6</span>, cbs<span class="op">=</span>cbs)</span></code></pre></div></li>
+class="sourceCode python"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.vision.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.callback.tensorboard <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Downloading dataset...&quot;</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> untar_data(URLs.PETS)<span class="op">/</span><span class="st">&#39;images&#39;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Finished downloading dataset&quot;</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_cat(x): <span class="cf">return</span> x[<span class="dv">0</span>].isupper()</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataloaders and resize the images</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>dls <span class="op">=</span> ImageDataLoaders.from_name_func(</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    path, get_image_files(path), valid_pct<span class="op">=</span><span class="fl">0.2</span>, seed<span class="op">=</span><span class="dv">42</span>,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    label_func<span class="op">=</span>is_cat, item_tfms<span class="op">=</span>Resize(<span class="dv">224</span>))</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;On the login node, this will download resnet34&quot;</span>)</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> vision_learner(dls, resnet34, metrics<span class="op">=</span>accuracy)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>cbs<span class="op">=</span>[SaveModelCallback(), TensorBoardCallback(<span class="st">&#39;runs&#39;</span>, trace_model<span class="op">=</span><span class="va">True</span>)]</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Trains the model for 6 epochs with this dataset</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>learn.unfreeze()</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">6</span>, cbs<span class="op">=</span>cbs)</span></code></pre></div></li>
 </ul>
 </section>
 <section class="slide level2">
 
 <h3 id="submission-file-for-the-classifier">Submission file for the
 classifier</h3>
-<div class="sourceCode" id="cb19"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> fastai.sbatch</span></code></pre></div>
-<div class="sourceCode" id="cb20"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --account=training2441</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mail-user=MYUSER@fz-juelich.de</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mail-type=ALL</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --nodes=1</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --job-name=cat-classifier</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --ntasks-per-node=1</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --cpus-per-task=128</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --output=output.%j</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --error=error.%j</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --time=00:20:00</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --partition=dc-gpu</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --reservation=training2441 # For today only</span></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="va">$HOME</span>/course/</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> sc_venv_template/activate.sh <span class="co"># Now we finally use the fastai module</span></span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> python cats.py</span></code></pre></div>
+<p>create file fastai.sbatch</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --account=training2441</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mail-user=MYUSER@fz-juelich.de</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mail-type=ALL</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --nodes=1</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --job-name=cat-classifier</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --ntasks-per-node=1</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --cpus-per-task=128</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --output=output.%j</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --error=error.%j</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --time=00:20:00</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --partition=dc-gpu</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --reservation=training2441 # For today only</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="va">$HOME</span>/course/</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> sc_venv_template/activate.sh <span class="co"># Now we finally use the fastai module</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> python cats.py</span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="submit-it">Submit it</h3>
-<div class="sourceCode" id="cb21"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> fastai.sbatch</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> fastai.sbatch</span></code></pre></div>
 </section>
 <section class="slide level2">
 
@@ -993,17 +991,17 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href=
 
 <h3 id="probably-not-much-happening">Probably not much happening…</h3>
 <ul>
-<li class="fragment"><div class="sourceCode" id="cb22"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> cat output.7948496 </span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="ex">The</span> activation script must be sourced, otherwise the virtual environment will not work.</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Setting</span> vars</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Downloading</span> dataset...</span></code></pre></div></li>
-<li class="fragment"><div class="sourceCode" id="cb23"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> cat err.7948496 </span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">The</span> following modules were not unloaded:</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span><span class="ex">Use</span> <span class="st">&quot;module --force purge&quot;</span> to unload all<span class="kw">)</span><span class="bu">:</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="ex">1</span><span class="er">)</span> <span class="ex">Stages/2024</span></span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> cat output.7948496 </span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">The</span> activation script must be sourced, otherwise the virtual environment will not work.</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Setting</span> vars</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Downloading</span> dataset...</span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> cat err.7948496 </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ex">The</span> following modules were not unloaded:</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span><span class="ex">Use</span> <span class="st">&quot;module --force purge&quot;</span> to unload all<span class="kw">)</span><span class="bu">:</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="ex">1</span><span class="er">)</span> <span class="ex">Stages/2024</span></span></code></pre></div></li>
 </ul>
 </section>
 <section id="section" class="slide level2">
@@ -1017,15 +1015,15 @@ to give up</li>
 <li class="fragment">Check the <code>error.${JOBID}</code> file</li>
 <li class="fragment">If you run it longer, you will get the actual
 error:</li>
-<li class="fragment"><div class="sourceCode" id="cb24"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>Traceback (most recent call last):</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  File <span class="st">&quot;/p/project/training2441/strube1/cats.py&quot;</span>, line <span class="dv">5</span>, <span class="kw">in</span> <span class="op">&lt;</span>module<span class="op">&gt;</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> untar_data(URLs.PETS)<span class="op">/</span><span class="st">&#39;images&#39;</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    ...</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    ...</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> URLError(err)</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>urllib.error.URLError: <span class="op">&lt;</span>urlopen error [Errno <span class="dv">110</span>] Connection timed out<span class="op">&gt;</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>srun: error: jwb0160: task <span class="dv">0</span>: Exited <span class="cf">with</span> exit code <span class="dv">1</span></span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb22"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>Traceback (most recent call last):</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  File <span class="st">&quot;/p/project/training2441/strube1/cats.py&quot;</span>, line <span class="dv">5</span>, <span class="kw">in</span> <span class="op">&lt;</span>module<span class="op">&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> untar_data(URLs.PETS)<span class="op">/</span><span class="st">&#39;images&#39;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> URLError(err)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>urllib.error.URLError: <span class="op">&lt;</span>urlopen error [Errno <span class="dv">110</span>] Connection timed out<span class="op">&gt;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>srun: error: jwb0160: task <span class="dv">0</span>: Exited <span class="cf">with</span> exit code <span class="dv">1</span></span></code></pre></div></li>
 </ul>
 </section>
 <section id="section-1" class="slide level2">
@@ -1036,12 +1034,12 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a h
 <h3 id="what-is-it-doing">What is it doing?</h3>
 <ul>
 <li class="fragment">This downloads the dataset:</li>
-<li class="fragment"><div class="sourceCode" id="cb25"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> untar_data(URLs.PETS)<span class="op">/</span><span class="st">&#39;images&#39;</span></span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb23"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> untar_data(URLs.PETS)<span class="op">/</span><span class="st">&#39;images&#39;</span></span></code></pre></div></li>
 <li class="fragment">And this one downloads the pre-trained
 weights:</li>
-<li class="fragment"><div class="sourceCode" id="cb26"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> vision_learner(dls, resnet34, metrics<span class="op">=</span>error_rate)</span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb24"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> vision_learner(dls, resnet34, metrics<span class="op">=</span>error_rate)</span></code></pre></div></li>
 </ul>
 </section>
 <section id="remember-remember" class="slide level2">
@@ -1067,61 +1065,61 @@ class="slide level2">
 <h2>On the login node:</h2>
 <ul>
 <li class="fragment">Comment out the line which does AI training:</li>
-<li class="fragment"><div class="sourceCode" id="cb27"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># learn.fit_one_cycle(6, cbs=cbs)</span></span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb25"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># learn.fit_one_cycle(6, cbs=cbs)</span></span></code></pre></div></li>
 <li class="fragment">Call our code on the login node!</li>
-<li class="fragment"><div class="sourceCode" id="cb28"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> sc_venv_template/activate.sh <span class="co"># So that we have fast.ai library</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> cats.py</span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb26"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> sc_venv_template/activate.sh <span class="co"># So that we have fast.ai library</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> cats.py</span></code></pre></div></li>
 </ul>
 </section>
 <section id="run-the-downloader-on-the-login-node" class="slide level2">
 <h2>Run the downloader on the login node</h2>
-<div class="sourceCode" id="cb29"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> source sc_venv_template/activate.sh</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> python cats.py </span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Downloading</span> dataset...</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span><span class="ex">████████-------------------------------</span><span class="kw">|</span> <span class="ex">23.50%</span> [190750720/811706944 00:08<span class="op">&lt;</span>00:26]</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a> <span class="ex">Downloading:</span> <span class="st">&quot;https://download.pytorch.org/models/resnet34-b627a593.pth&quot;</span> to /p/project/ccstao/cstao05/.cache/torch/hub/checkpoints/resnet34-b627a593.pth</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="ex">100%</span><span class="kw">|</span><span class="ex">█████████████████████████████████████</span><span class="kw">|</span> <span class="ex">83.3M/83.3M</span> [00:00<span class="op">&lt;</span>00:00, 266MB/s]</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> source sc_venv_template/activate.sh</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> python cats.py </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Downloading</span> dataset...</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span><span class="ex">████████-------------------------------</span><span class="kw">|</span> <span class="ex">23.50%</span> [190750720/811706944 00:08<span class="op">&lt;</span>00:26]</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a> <span class="ex">Downloading:</span> <span class="st">&quot;https://download.pytorch.org/models/resnet34-b627a593.pth&quot;</span> to /p/project/ccstao/cstao05/.cache/torch/hub/checkpoints/resnet34-b627a593.pth</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="ex">100%</span><span class="kw">|</span><span class="ex">█████████████████████████████████████</span><span class="kw">|</span> <span class="ex">83.3M/83.3M</span> [00:00<span class="op">&lt;</span>00:00, 266MB/s]</span></code></pre></div>
 </section>
 <section id="run-it-again-on-the-compute-nodes" class="slide level2">
 <h2>Run it again on the compute nodes!</h2>
 <ul>
 <li class="fragment">Un-comment back the line that does training:</li>
-<li class="fragment"><div class="sourceCode" id="cb30"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">learn.fit_one_cycle</span><span class="er">(</span><span class="ex">6,</span> cbs=cbs<span class="kw">)</span></span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb28"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">learn.fit_one_cycle</span><span class="er">(</span><span class="ex">6,</span> cbs=cbs<span class="kw">)</span></span></code></pre></div></li>
 <li class="fragment">Submit the job!</li>
-<li class="fragment"><div class="sourceCode" id="cb31"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> fastai.sbatch</span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb29"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> fastai.sbatch</span></code></pre></div></li>
 </ul>
 </section>
 <section id="masoquistically-waiting-for-the-job-to-run"
 class="slide level2">
 <h2>Masoquistically waiting for the job to run?</h2>
-<div class="sourceCode" id="cb32"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> squeue <span class="at">--me</span></span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> squeue <span class="at">--me</span></span></code></pre></div>
 <p>(To exit, type CTRL-C)</p>
 </section>
 <section id="check-output-files" class="slide level2">
 <h2>Check output files</h2>
 <ul>
-<li class="fragment">You can see them within VSCode</li>
-<li class="fragment"><div class="sourceCode" id="cb33"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="ex">The</span> activation script must be sourced, otherwise the virtual environment will not work.</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Setting</span> vars</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Downloading</span> dataset...</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Finished</span> downloading dataset</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="ex">epoch</span>     train_loss  valid_loss  error_rate  time    </span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">-----------------------------------</span><span class="kw">|</span> <span class="ex">0.00%</span> [0/92 00:00<span class="op">&lt;</span><span class="pp">?</span>]</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">-----------------------------------</span><span class="kw">|</span> <span class="ex">2.17%</span> [2/92 00:14<span class="op">&lt;</span>10:35 1.7452]</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">█----------------------------------</span><span class="kw">|</span> <span class="ex">3.26%</span> [3/92 00:14<span class="op">&lt;</span>07:01 1.6413]</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">██---------------------------------</span><span class="kw">|</span> <span class="ex">5.43%</span> [5/92 00:15<span class="op">&lt;</span>04:36 1.6057]</span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="ex">...</span></span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="ex">....</span></span>
-<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 :</span>
-<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="ex">epoch</span>     train_loss  valid_loss  error_rate  time    </span>
-<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="ex">0</span>         0.049855    0.021369    0.007442    00:42     </span></code></pre></div></li>
+<li class="fragment">You can see them within jupyter-jsc</li>
+<li class="fragment"><div class="sourceCode" id="cb31"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">The</span> activation script must be sourced, otherwise the virtual environment will not work.</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Setting</span> vars</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Downloading</span> dataset...</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Finished</span> downloading dataset</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="ex">epoch</span>     train_loss  valid_loss  error_rate  time    </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">-----------------------------------</span><span class="kw">|</span> <span class="ex">0.00%</span> [0/92 00:00<span class="op">&lt;</span><span class="pp">?</span>]</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">-----------------------------------</span><span class="kw">|</span> <span class="ex">2.17%</span> [2/92 00:14<span class="op">&lt;</span>10:35 1.7452]</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">█----------------------------------</span><span class="kw">|</span> <span class="ex">3.26%</span> [3/92 00:14<span class="op">&lt;</span>07:01 1.6413]</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 : <span class="kw">|</span><span class="ex">██---------------------------------</span><span class="kw">|</span> <span class="ex">5.43%</span> [5/92 00:15<span class="op">&lt;</span>04:36 1.6057]</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="ex">...</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="ex">....</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="ex">Epoch</span> 1/1 :</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="ex">epoch</span>     train_loss  valid_loss  error_rate  time    </span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a><span class="ex">0</span>         0.049855    0.021369    0.007442    00:42     </span></code></pre></div></li>
 <li class="fragment">🎉</li>
 <li class="fragment">🥳</li>
 </ul>
@@ -1135,25 +1133,21 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href=
 Tensorboard</li>
 <li class="fragment">And we already have the code for it on our
 example!</li>
-<li class="fragment"><div class="sourceCode" id="cb34"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>cbs<span class="op">=</span>[SaveModelCallback(), TensorBoardCallback(<span class="st">&#39;runs&#39;</span>, trace_model<span class="op">=</span><span class="va">True</span>)]</span></code></pre></div></li>
+<li class="fragment"><div class="sourceCode" id="cb32"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>cbs<span class="op">=</span>[SaveModelCallback(), TensorBoardCallback(<span class="st">&#39;runs&#39;</span>, trace_model<span class="op">=</span><span class="va">True</span>)]</span></code></pre></div></li>
 </ul>
 </section>
 <section id="example-tensorboard" class="slide level2">
 <h2>Example: Tensorboard</h2>
 <ul>
-<li class="fragment">The command</li>
-<li class="fragment"><div class="sourceCode" id="cb35"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="ex">tensorboard</span> <span class="at">--logdir</span><span class="op">=</span>runs  <span class="at">--port</span><span class="op">=</span>9999 serve</span></code></pre></div></li>
-<li class="fragment">Opens a connection on port 9999… <em>OF THE
-SUPERCOMPUTER</em>.</li>
-<li class="fragment">This port is behind the firewall. You can’t access
-it directly…</li>
-<li class="fragment">We need to do bypass the firewall 🏴‍☠️
-<ul>
-<li class="fragment">SSH PORT FORWARDING</li>
-</ul></li>
+<li class="fragment">Open a notebook</li>
+<li class="fragment">Choose PyDeepLearning-2024.3 kernel</li>
+<li class="fragment">Write</li>
 </ul>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tensorboard</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>load_ext tensorboard</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>tensorboard <span class="op">--</span>logdir<span class="op">=</span>runs</span></code></pre></div>
 </section>
 <section id="example-tensorboard-1" class="slide level2">
 <h2>Example: Tensorboard</h2>
@@ -1183,7 +1177,7 @@ tensorboard --logdir=runs  --port=12345 serve
 
 --- -->
 <h3 id="tensorboard-on-jureca-dc">Tensorboard on Jureca DC</h3>
-<p><img data-src="images/tensorboard-cats.png" /></p>
+<p><img data-src="images/tbb.png" /></p>
 </section>
 <section id="day-1-recap" class="slide level2">
 <h2>Day 1 recap</h2>
@@ -1191,10 +1185,8 @@ tensorboard --logdir=runs  --port=12345 serve
 <ul>
 <li class="fragment">Stay awake for the most part of this morning
 😴</li>
-<li class="fragment">Have your own ssh keys 🗝️🔐</li>
-<li class="fragment">A working ssh connection to the supercomputers
-🖥️</li>
-<li class="fragment">Can edit and transfer files via VSCode 📝</li>
+<li class="fragment">A working connection to the supercomputers 🖥️</li>
+<li class="fragment">Can edit and transfer files via jupyter-jsc 📝</li>
 <li class="fragment">Submit jobs and read results 📫</li>
 <li class="fragment">Access web services on the login nodes 🧙‍♀️</li>
 <li class="fragment">Is ready to make great code! 💪</li>

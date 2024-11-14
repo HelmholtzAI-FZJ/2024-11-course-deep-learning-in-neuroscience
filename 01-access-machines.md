@@ -585,10 +585,13 @@ git clone https://gitlab.jsc.fz-juelich.de/kesselheim1/sc_venv_template.git
 - Add these lines at the end: 
 -
  ```bash
-fastai
-wandb
+fastai==2.7.15
+scipy==1.11.1
+matplotlib==3.7.2
+scikit-learn==1.3.1
+pandas==2.0.3
+torch==2.1.2
 accelerate
-deepspeed
 ```
 
 - Run on the terminal: `sc_venv_template/setup.sh`
@@ -628,9 +631,8 @@ Python 3.11.3 (main, Jun 25 2023, 13:17:30) [GCC 12.3.0]
 ### Let's train a 🐈 classifier!
 
 - This is a minimal demo, to show some quirks of the supercomputer
-- ```bash
-code cats.py
-```
+
+- Create a file names "cats.py"
 
 - ```python 
 from fastai.vision.all import *
@@ -657,9 +659,9 @@ learn.fit_one_cycle(6, cbs=cbs)
 
 ### Submission file for the classifier
 
-```bash
-code fastai.sbatch
-```
+
+create file  fastai.sbatch
+
 
 ```bash
 #!/bin/bash
@@ -829,7 +831,7 @@ watch squeue --me
 
 ## Check output files
 
-- You can see them within VSCode
+- You can see them within jupyter-jsc
 - ```bash
 The activation script must be sourced, otherwise the virtual environment will not work.
 Setting vars
@@ -865,14 +867,14 @@ cbs=[SaveModelCallback(), TensorBoardCallback('runs', trace_model=True)]
 
 ## Example: Tensorboard
 
-- The command 
-- ```bash
-tensorboard --logdir=runs  --port=9999 serve
+- Open a notebook 
+- Choose PyDeepLearning-2024.3 kernel
+- Write 
+```python
+import tensorboard
+%load_ext tensorboard
+%tensorboard --logdir=runs
 ```
-- Opens a connection on port 9999... *OF THE SUPERCOMPUTER*.
-- This port is behind the firewall. You can't access it directly... 
-- We need to do bypass the firewall 🏴‍☠️
-  - SSH PORT FORWARDING
 
 ---
 
@@ -905,7 +907,7 @@ tensorboard --logdir=runs  --port=12345 serve
 
 ### Tensorboard on Jureca DC
 
-![](images/tensorboard-cats.png)
+![](images/tbb.png)
 
 
 ---
@@ -915,9 +917,8 @@ tensorboard --logdir=runs  --port=12345 serve
 As of now, I expect you managed to: 
 
 - Stay awake for the most part of this morning 😴
-- Have your own ssh keys 🗝️🔐
-- A working ssh connection to the supercomputers 🖥️
-- Can edit and transfer files via VSCode 📝
+- A working connection to the supercomputers 🖥️
+- Can edit and transfer files via jupyter-jsc 📝
 - Submit jobs and read results 📫
 - Access web services on the login nodes 🧙‍♀️
 - Is ready to make great code! 💪

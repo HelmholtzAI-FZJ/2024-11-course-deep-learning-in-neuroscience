@@ -49,33 +49,72 @@ git clone https://github.com/HelmholtzAI-FZJ/2024-11-course-deep-learning-in-neu
 
 ---
 
+## The ImageNet dataset
+
+```bash
+ILSVRC
+|-- Data/
+    `-- CLS-LOC
+        |-- test
+        |-- train
+        |   |-- n01440764
+        |   |   |-- n01440764_10026.JPEG
+        |   |   |-- n01440764_10027.JPEG
+        |   |   |-- n01440764_10029.JPEG
+        |   |-- n01695060
+        |   |   |-- n01695060_10009.JPEG
+        |   |   |-- n01695060_10022.JPEG
+        |   |   |-- n01695060_10028.JPEG
+        |   |   |-- ...
+        |   |...
+        |-- val
+            |-- ILSVRC2012_val_00000001.JPEG  
+            |-- ILSVRC2012_val_00016668.JPEG  
+            |-- ILSVRC2012_val_00033335.JPEG      
+            |-- ...
+```
+---
+
 ## ImageNet class
 
 ```python
 class ImageNet(Dataset):
     def __init__(self, root, split, transform=None):
-        if split not in ["train", "val"]:
-            raise ValueError("split must be either 'train' or 'val'")
-        
-        self.root = root
-        
-        with open(os.path.join(root, "imagenet_{}.pk".format(split)), "rb") as f:
-            data = pickle.load(f)
-
-        self.samples = list(data.keys())
-        self.targets = list(data.values())
+        self.samples = []
+        self.targets = []
         self.transform = transform
-        
-                
+        self.syn_to_class = {}
+        with open(os.path.join(root, "imagenet_class_index.json"), "rb") as f:
+                    json_file = json.load(f)
+                    for class_id, v in json_file.items():
+                        self.syn_to_class[v[0]] = int(class_id)
+        with open(os.path.join(root, "ILSVRC2012_val_labels.json"), "rb") as f:
+                    self.val_to_syn = json.load(f)
+        samples_dir = os.path.join(root, "ILSVRC/Data/CLS-LOC", split)
+        for entry in os.listdir(samples_dir):
+            if split == "train":
+                syn_id = entry
+                target = self.syn_to_class[syn_id]
+                syn_folder = os.path.join(samples_dir, syn_id)
+                for sample in os.listdir(syn_folder):
+                    sample_path = os.path.join(syn_folder, sample)
+                    self.samples.append(sample_path)
+                    self.targets.append(target)
+            elif split == "val":
+                syn_id = self.val_to_syn[entry]
+                target = self.syn_to_class[syn_id]
+                sample_path = os.path.join(samples_dir, entry)
+                self.samples.append(sample_path)
+                self.targets.append(target)
+    
     def __len__(self):
-        return len(self.samples)    
+            return len(self.samples)
     
     def __getitem__(self, idx):
-        x = Image.open(os.path.join(self.root, self.samples[idx])).convert("RGB")
-        if self.transform:
-            x = self.transform(x)
-        return x, self.targets[idx]
-    
+            x = Image.open(self.samples[idx]).convert("RGB")
+            if self.transform:
+                x = self.transform(x)
+            return x, self.targets[idx]
 ```
 
 --- 
@@ -197,13 +236,13 @@ real	342m11.864s
 
 
 
+![](images/GPUs.svg)
 
 
-- We make use of the GPU of our supercomputer and distribute our training to make training faster.
-- It's when things get interesting
 ::::
 :::: {.col}
-![](images/GPUs.svg)
+- We make use of the GPU of our supercomputer and distribute our training to make training faster.
+- It's when things get interesting
 ::::
 :::
 
@@ -231,7 +270,6 @@ real	342m11.864s
 
 
 
---- 
 
 <!-- ![](images/ranks.svg)
 
@@ -423,6 +461,10 @@ real	6m56.457s
 
 ---
 
+## DEMO
+
+---
+
 ## Multi-Node training
 
 With 4 nodes: 
@@ -485,10 +527,6 @@ trainer = pl.Trainer(max_epochs=10,  accelerator="gpu", num_nodes=nnodes)
 #SBATCH --cpus-per-task=32           # Divide the number of cpus (128) by the number of GPUs (4)
 export CUDA_VISIBLE_DEVICES=0,1,2,3  # Very important to make the GPUs visible
 ```
-
----
-
-## DEMO
 
 --- 
 
@@ -699,10 +737,20 @@ self.log("training_loss", train_loss)
 
 ## TensorBoard
 
-```bash
-source $HOME/course/$USER/sc_venv_template/activate.sh
-tensorboard --logdir=[PATH_TO_TENSOR_BOARD] 
-```
+## Example: Tensorboard
+
+- Open a notebook 
+- Choose PyDeepLearning-2024.3 kernel
+- Write 
+
+    ```python
+    import tensorboard
+    %load_ext tensorboard
+    %tensorboard --logdir=<PATH>
+    ```
+
+---
+
 ![](images/tb.png){ width=750px }
 
 ---
