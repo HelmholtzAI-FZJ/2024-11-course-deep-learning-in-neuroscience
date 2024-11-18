@@ -24,6 +24,45 @@ You have to Join the [project](https://judoor.fz-juelich.de/projects/datasets/) 
 
 ---
 
+### Setup project path
+
+```bash
+mkdir $PROJECT_training2441/$USER
+
+Create a shortcut for the project on the home folder
+rm -rf ~/course ; ln -s $PROJECT_training2441/$USER ~/course
+
+# Enter course folder and
+cd ~/course
+
+# Where am I?
+pwd
+
+# We well need those later
+mkdir ~/course/.cache
+mkdir ~/course/.config
+mkdir ~/course/.fastai
+
+rm -rf $HOME/.cache ; ln -s ~/course/.cache $HOME/
+rm -rf $HOME/.config ; ln -s ~/course/.config $HOME/
+rm -rf $HOME/.fastai ; ln -s ~/course/.fastai $HOME/
+```
+
+---
+
+### Setup the Environement
+
+- Download the sc_venv_template
+
+    ```bash
+    cd $HOME/course/
+    git clone https://gitlab.jsc.fz-juelich.de/kesselheim1/sc_venv_template.git
+    ```
+
+- Run on the terminal: `sc_venv_template/setup.sh`
+
+---
+
 ## We need to download some code
 
 ```bash
@@ -357,7 +396,7 @@ real	89m15.923s
 
 ## There are more levels!
 
-![](images/lets-go-deeper.jpg)
+<!-- ![](images/lets-go-deeper.jpg) -->
 
 --- 
 
@@ -737,8 +776,6 @@ self.log("training_loss", train_loss)
 
 ## TensorBoard
 
-## Example: Tensorboard
-
 - Open a notebook 
 - Choose PyDeepLearning-2024.3 kernel
 - Write 
@@ -769,7 +806,7 @@ self.log("training_loss", train_loss)
 ## Part 2 RECAP 
 
 - Ran parallel code.
-- Can submit single node, multi-gpu and multi-node training.
+- Can submit single GPU, multi-GPU and multi-node training.
 - Use TensorBoard on the supercomputer.
 - Usage of llview.
 
