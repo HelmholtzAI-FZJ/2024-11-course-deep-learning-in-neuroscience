@@ -56,16 +56,15 @@ Links for the complimentary parts of this course:
 
 | Time          | Title        |
 | ------------- | -----------  |
-| 09:00 - 09:15 | Welcome      |
-| 09:15 - 09:30 | Judoor registration |
-| 09:30 - 10:00 | Introduction |
-| 10:00 - 10:05 | Coffee break |
-| 10:05 - 10:20 | Jupyter-JSC & SLURM |
-| 10:20 - 11:00 | Launch First Job |
-| 11:00 - 11:15 | Coffee Break |
-| 11:15 - 12:00 | Distributed Data Parallel | 
-| 12:00 - 12:15 | Coffee Break |
-| 12:30 - 13:00 | Model Parallelism and Analysis |
+| 10:00 - 10:10 | Welcome      |
+| 10:10 - 10:40 | Introduction |
+| 10:40 - 11:00 | Jupyter-JSC |
+| 11:00 - 11:10 | Coffee Break  |
+| 11:10 - 11:30 | SLURM |
+| 11:30 - 12:00 | Setup Environement |
+| 12:00 - 12:10 | Coffee Break |
+| 12:10 - 12:40 | Distributed Data Parallel | 
+| 12:40 - 13:00 | Model Parallelism and Analysis |
 
 ---
 
@@ -639,7 +638,7 @@ Python 3.11.3 (main, Jun 25 2023, 13:17:30) [GCC 12.3.0]
 
 - This is a minimal demo, to show some quirks of the supercomputer
 
-- Create a file names "cats.py"
+- Create a file "cats.py"
 
 - ```python 
 from fastai.vision.all import *
@@ -876,11 +875,11 @@ cbs=[SaveModelCallback(), TensorBoardCallback('runs', trace_model=True)]
 - Open a notebook 
 - Choose PyDeepLearning-2024.3 kernel
 - Write 
-```python
-import tensorboard
-%load_ext tensorboard
-%tensorboard --logdir=runs
-```
+  ```python
+  import tensorboard
+  %load_ext tensorboard
+  %tensorboard --logdir=runs
+  ```
 
 ---
 
